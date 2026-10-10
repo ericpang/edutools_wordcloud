@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Join · Live Word Cloud</title>
+  <meta name="description" content="Add your ideas to the live word cloud.">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <script>try { var t = localStorage.getItem("theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <script type="module" src="js/join.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="join.html"><img src="assets/favicon.svg" alt="">Live Word Cloud</a>
+    <button id="theme-toggle" class="icon-btn" type="button"></button>
+  </header>
+
+  <div id="config-banner" class="banner" hidden>
+    Firebase isn't configured yet. Add your project's config to <code>js/firebase-config.js</code>.
+  </div>
+
+  <main class="join">
+    <section id="enter-code" class="card" hidden>
+      <h1>Join a word cloud</h1>
+      <form id="code-form">
+        <label>Session code
+          <input id="code-input" maxlength="6" required autocomplete="off" autocapitalize="characters"
+                 inputmode="text" placeholder="ABC123">
+        </label>
+        <button class="btn primary big" type="submit">Join</button>
+      </form>
+    </section>
+
+    <section id="session" class="card" hidden>
+      <p class="eyebrow">Session <span id="session-code"></span></p>
+      <h1 id="topic"></h1>
+      <form id="idea-form" novalidate>
+        <input id="idea" maxlength="40" autocomplete="off" enterkeyhint="send"
+               placeholder="Type your idea…" aria-label="Your idea">
+        <div class="input-meta">
+          <span id="char-count">0/40</span>
+          <span id="remaining"></span>
+        </div>
+        <button id="submit-btn" class="btn primary big" type="submit">Submit</button>
+      </form>
+      <p id="status" class="status" role="status" aria-live="polite"></p>
+      <div id="mine-wrap" class="mine" hidden>
+        <p class="eyebrow">Your ideas</p>
+        <ul id="mine" class="chips"></ul>
+      </div>
+    </section>
+
+    <section id="message" class="card center" hidden>
+      <div id="message-emoji" class="message-emoji"></div>
+      <h1 id="message-title"></h1>
+      <p id="message-body" class="muted"></p>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

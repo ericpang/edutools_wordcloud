@@ -1,0 +1,24 @@
+{
+  "rules": {
+    "sessions": {
+      "$code": {
+        ".read": true,
+        "meta": {
+          ".write": "auth != null && (!data.exists() || data.child('owner').val() === auth.uid)",
+          ".validate": "newData.child('owner').val() === auth.uid && newData.child('topic').isString() && newData.child('topic').val().length > 0 && newData.child('topic').val().length <= 200 && newData.child('open').isBoolean() && newData.child('maxPerUser').isNumber()"
+        },
+        "hidden": {
+          ".write": "auth != null && root.child('sessions/' + $code + '/meta/owner').val() === auth.uid"
+        },
+        "words": {
+          ".write": "auth != null && root.child('sessions/' + $code + '/meta/owner').val() === auth.uid",
+          ".indexOn": ["uid"],
+          "$wordId": {
+            ".write": "auth != null && !data.exists() && root.child('sessions/' + $code + '/meta/open').val() === true",
+            ".validate": "newData.hasChildren(['text', 'uid', 'ts']) && newData.child('text').isString() && newData.child('text').val().length > 0 && newData.child('text').val().length <= 40 && newData.child('uid').val() === auth.uid && newData.child('ts').val() === now"
+          }
+        }
+      }
+    }
+  }
+}
