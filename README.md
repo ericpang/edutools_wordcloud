@@ -132,6 +132,8 @@ WordCloud/
 ├── assets/
 │   └── favicon.svg
 ├── database.rules.json     # Firebase security rules (copy into console)
+├── .github/workflows/
+│   └── pages.yml           # Deploys the site to GitHub Pages on push
 ├── .nojekyll               # Serve files as-is on GitHub Pages
 └── README.md
 ```
@@ -250,8 +252,10 @@ The QR code uses the current page's address, so this works without any changes.
 
 1. Push the project to a GitHub repository, for example `WordCloud`.
 2. In the repo, open **Settings → Pages**.
-3. Under **Build and deployment**, set *Source* to **Deploy from a branch**, then choose **`main`** and **`/ (root)`**.
-4. Wait about a minute. The site will be live at `https://<your-username>.github.io/WordCloud/`.
+3. Under **Build and deployment**, set *Source* to **GitHub Actions**. The included workflow
+   (`.github/workflows/pages.yml`) publishes the site on every push to `main`. You can also
+   run it by hand from the **Actions** tab.
+4. Wait about a minute for the workflow to finish. The site will be live at `https://<your-username>.github.io/WordCloud/`.
 5. In Firebase, open **Authentication → Settings → Authorized domains** and add
    `<your-username>.github.io`. Without this step, anonymous sign-in fails on the deployed site.
 
