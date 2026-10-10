@@ -19,6 +19,82 @@
           }
         }
       }
+    },
+    "boards": {
+      "$code": {
+        ".read": "auth != null && data.child('meta/owner').val() === auth.uid",
+        "meta": {
+          ".read": true,
+          ".write": "auth != null && (!data.exists() || data.child('owner').val() === auth.uid)",
+          ".validate": "newData.hasChildren(['title', 'owner', 'layout', 'open', 'approval', 'revealed', 'showNames', 'maxPerUser', 'createdAt']) && newData.child('owner').val() === auth.uid && (newData.child('layout').val() === 'wall' || newData.child('columns').exists())",
+          "title": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 200" },
+          "owner": { ".validate": "newData.isString()" },
+          "layout": { ".validate": "newData.val() === 'wall' || newData.val() === 'columns'" },
+          "columns": {
+            "$col": {
+              ".validate": "newData.hasChildren(['name', 'order'])",
+              "name": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 40" },
+              "order": { ".validate": "newData.isNumber()" },
+              "$other": { ".validate": false }
+            }
+          },
+          "open": { ".validate": "newData.isBoolean()" },
+          "approval": { ".validate": "newData.isBoolean()" },
+          "revealed": { ".validate": "newData.isBoolean()" },
+          "showNames": { ".validate": "newData.isBoolean()" },
+          "maxPerUser": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100" },
+          "createdAt": { ".validate": "newData.isNumber()" },
+          "$other": { ".validate": false }
+        },
+        "posts": {
+          ".read": "auth != null && (root.child('boards/' + $code + '/meta/revealed').val() === true || (query.orderByChild === 'uid' && query.equalTo === auth.uid))",
+          ".write": "auth != null && root.child('boards/' + $code + '/meta/owner').val() === auth.uid",
+          ".indexOn": ["uid"],
+          "$postId": {
+            ".write": "auth != null && root.child('boards/' + $code + '/meta/open').val() === true && ((root.child('boards/' + $code + '/meta/approval').val() !== true && ((!data.exists() && newData.child('uid').val() === auth.uid) || data.child('uid').val() === auth.uid)) || (data.child('uid').val() === auth.uid && !newData.exists()))",
+            ".validate": "newData.hasChildren(['text', 'color', 'uid', 'ts'])",
+            "text": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 280" },
+            "color": { ".validate": "newData.isString() && newData.val().matches(/^(yellow|pink|blue|green|purple|orange)$/)" },
+            "column": { ".validate": "newData.isString() && root.child('boards/' + $code + '/meta/columns/' + newData.val()).exists()" },
+            "name": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 30" },
+            "uid": { ".validate": "newData.isString() && (newData.val() === auth.uid || root.child('boards/' + $code + '/meta/owner').val() === auth.uid)" },
+            "ts": { ".validate": "newData.isNumber() && (newData.val() === now || newData.val() === data.val() || (root.child('boards/' + $code + '/meta/owner').val() === auth.uid && newData.val() <= now))" },
+            "editedAt": { ".validate": "newData.isNumber() && (newData.val() === now || newData.val() === data.val() || root.child('boards/' + $code + '/meta/owner').val() === auth.uid)" },
+            "highlighted": { ".validate": "newData.isBoolean() && (newData.val() === false || newData.val() === data.val() || root.child('boards/' + $code + '/meta/owner').val() === auth.uid)" },
+            "$other": { ".validate": false }
+          }
+        },
+        "pending": {
+          ".read": "auth != null && query.orderByChild === 'uid' && query.equalTo === auth.uid",
+          ".write": "auth != null && root.child('boards/' + $code + '/meta/owner').val() === auth.uid",
+          ".indexOn": ["uid"],
+          "$postId": {
+            ".write": "auth != null && root.child('boards/' + $code + '/meta/open').val() === true && ((!data.exists() && newData.child('uid').val() === auth.uid && root.child('boards/' + $code + '/meta/approval').val() === true) || data.child('uid').val() === auth.uid)",
+            ".validate": "newData.hasChildren(['text', 'color', 'uid', 'ts'])",
+            "text": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 280" },
+            "color": { ".validate": "newData.isString() && newData.val().matches(/^(yellow|pink|blue|green|purple|orange)$/)" },
+            "column": { ".validate": "newData.isString() && root.child('boards/' + $code + '/meta/columns/' + newData.val()).exists()" },
+            "name": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 30" },
+            "uid": { ".validate": "newData.isString() && (newData.val() === auth.uid || root.child('boards/' + $code + '/meta/owner').val() === auth.uid)" },
+            "ts": { ".validate": "newData.isNumber() && (newData.val() === now || newData.val() === data.val() || (root.child('boards/' + $code + '/meta/owner').val() === auth.uid && newData.val() <= now))" },
+            "editedAt": { ".validate": "newData.isNumber() && (newData.val() === now || newData.val() === data.val() || root.child('boards/' + $code + '/meta/owner').val() === auth.uid)" },
+            "highlighted": { ".validate": "newData.isBoolean() && (newData.val() === false || newData.val() === data.val() || root.child('boards/' + $code + '/meta/owner').val() === auth.uid)" },
+            "hidden": { ".validate": "newData.isBoolean() && (newData.val() === data.val() || root.child('boards/' + $code + '/meta/owner').val() === auth.uid)" },
+            "$other": { ".validate": false }
+          }
+        },
+        "likes": {
+          ".read": "auth != null",
+          ".write": "auth != null && root.child('boards/' + $code + '/meta/owner').val() === auth.uid",
+          "$postId": {
+            "$uid": {
+              ".write": "auth != null && auth.uid === $uid",
+              ".validate": "newData.val() === true && root.child('boards/' + $code + '/posts/' + $postId).exists()"
+            }
+          }
+        },
+        "$other": { ".validate": false }
+      }
     }
   }
 }
