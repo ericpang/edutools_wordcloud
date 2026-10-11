@@ -95,6 +95,76 @@
         },
         "$other": { ".validate": false }
       }
+    },
+    "polls": {
+      "$code": {
+        ".read": "auth != null && data.child('meta/owner').val() === auth.uid",
+        "meta": {
+          ".read": true,
+          ".write": "auth != null && (!data.exists() || data.child('owner').val() === auth.uid)",
+          ".validate": "newData.hasChildren(['title', 'owner', 'current', 'open', 'showResults', 'shareResults', 'revealed', 'createdAt']) && newData.child('owner').val() === auth.uid",
+          "title": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 200" },
+          "owner": { ".validate": "newData.isString()" },
+          "current": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 20" },
+          "open": { ".validate": "newData.isBoolean()" },
+          "showResults": { ".validate": "newData.isBoolean()" },
+          "shareResults": { ".validate": "newData.isBoolean()" },
+          "revealed": { ".validate": "newData.isBoolean()" },
+          "createdAt": { ".validate": "newData.isNumber()" },
+          "$other": { ".validate": false }
+        },
+        "questions": {
+          ".read": true,
+          ".write": "auth != null && root.child('polls/' + $code + '/meta/owner').val() === auth.uid",
+          "$qid": {
+            ".validate": "newData.hasChildren(['order', 'type', 'text']) && (newData.child('type').val() !== 'rating' || newData.hasChild('scale')) && ((newData.child('type').val() !== 'single' && newData.child('type').val() !== 'multi') || newData.hasChild('options'))",
+            "order": { ".validate": "newData.isNumber()" },
+            "type": { ".validate": "newData.isString() && newData.val().matches(/^(single|multi|rating|text)$/)" },
+            "text": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 200" },
+            "options": {
+              "$opt": {
+                ".validate": "newData.hasChildren(['label', 'order'])",
+                "label": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 80" },
+                "order": { ".validate": "newData.isNumber()" },
+                "$other": { ".validate": false }
+              }
+            },
+            "quiz": { ".validate": "newData.isBoolean()" },
+            "scale": { ".validate": "newData.isNumber() && newData.val() >= 2 && newData.val() <= 10" },
+            "low": { ".validate": "newData.isString() && newData.val().length <= 40" },
+            "high": { ".validate": "newData.isString() && newData.val().length <= 40" },
+            "$other": { ".validate": false }
+          }
+        },
+        "answers": {
+          ".write": "auth != null && root.child('polls/' + $code + '/meta/owner').val() === auth.uid",
+          "$qid": {
+            ".read": "auth != null && root.child('polls/' + $code + '/meta/current').val() === $qid && root.child('polls/' + $code + '/meta/revealed').val() === true",
+            "$opt": { ".validate": "newData.val() === true" }
+          }
+        },
+        "responses": {
+          ".write": "auth != null && root.child('polls/' + $code + '/meta/owner').val() === auth.uid",
+          "$qid": {
+            ".read": "auth != null && root.child('polls/' + $code + '/meta/current').val() === $qid && root.child('polls/' + $code + '/meta/shareResults').val() === true",
+            "$uid": {
+              ".read": "auth != null && auth.uid === $uid",
+              ".write": "auth != null && auth.uid === $uid && root.child('polls/' + $code + '/meta/current').val() === $qid && root.child('polls/' + $code + '/meta/open').val() === true",
+              ".validate": "newData.hasChild('ts') && (newData.hasChild('choice') || newData.hasChild('choices') || newData.hasChild('rating') || newData.hasChild('text')) && root.child('polls/' + $code + '/questions/' + $qid).exists()",
+              "ts": { ".validate": "newData.isNumber() && newData.val() === now" },
+              "choice": { ".validate": "newData.isString() && root.child('polls/' + $code + '/questions/' + $qid + '/type').val() === 'single' && root.child('polls/' + $code + '/questions/' + $qid + '/options/' + newData.val()).exists()" },
+              "choices": {
+                ".validate": "root.child('polls/' + $code + '/questions/' + $qid + '/type').val() === 'multi' && newData.hasChildren()",
+                "$opt": { ".validate": "newData.val() === true && root.child('polls/' + $code + '/questions/' + $qid + '/options/' + $opt).exists()" }
+              },
+              "rating": { ".validate": "newData.isNumber() && root.child('polls/' + $code + '/questions/' + $qid + '/type').val() === 'rating' && newData.val() >= 1 && newData.val() <= root.child('polls/' + $code + '/questions/' + $qid + '/scale').val()" },
+              "text": { ".validate": "newData.isString() && root.child('polls/' + $code + '/questions/' + $qid + '/type').val() === 'text' && newData.val().length > 0 && newData.val().length <= 140" },
+              "$other": { ".validate": false }
+            }
+          }
+        },
+        "$other": { ".validate": false }
+      }
     }
   }
 }
