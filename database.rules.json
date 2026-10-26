@@ -43,6 +43,9 @@
           "revealed": { ".validate": "newData.isBoolean()" },
           "showNames": { ".validate": "newData.isBoolean()" },
           "maxPerUser": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100" },
+          "groups": { ".validate": "newData.isNumber() && (newData.val() === 0 || (newData.val() >= 2 && newData.val() <= 12))" },
+          "groupSeed": { ".validate": "newData.isNumber()" },
+          "chat": { ".validate": "newData.isBoolean()" },
           "createdAt": { ".validate": "newData.isNumber()" },
           "$other": { ".validate": false }
         },
@@ -61,6 +64,7 @@
             "ts": { ".validate": "newData.isNumber() && (newData.val() === now || newData.val() === data.val() || (root.child('boards/' + $code + '/meta/owner').val() === auth.uid && newData.val() <= now))" },
             "editedAt": { ".validate": "newData.isNumber() && (newData.val() === now || newData.val() === data.val() || root.child('boards/' + $code + '/meta/owner').val() === auth.uid)" },
             "highlighted": { ".validate": "newData.isBoolean() && (newData.val() === false || newData.val() === data.val() || root.child('boards/' + $code + '/meta/owner').val() === auth.uid)" },
+            "group": { ".validate": "newData.isNumber() && (newData.val() === root.child('boards/' + $code + '/members/' + auth.uid + '/group').val() || root.child('boards/' + $code + '/meta/owner').val() === auth.uid)" },
             "$other": { ".validate": false }
           }
         },
@@ -79,6 +83,7 @@
             "ts": { ".validate": "newData.isNumber() && (newData.val() === now || newData.val() === data.val() || (root.child('boards/' + $code + '/meta/owner').val() === auth.uid && newData.val() <= now))" },
             "editedAt": { ".validate": "newData.isNumber() && (newData.val() === now || newData.val() === data.val() || root.child('boards/' + $code + '/meta/owner').val() === auth.uid)" },
             "highlighted": { ".validate": "newData.isBoolean() && (newData.val() === false || newData.val() === data.val() || root.child('boards/' + $code + '/meta/owner').val() === auth.uid)" },
+            "group": { ".validate": "newData.isNumber() && (newData.val() === root.child('boards/' + $code + '/members/' + auth.uid + '/group').val() || root.child('boards/' + $code + '/meta/owner').val() === auth.uid)" },
             "hidden": { ".validate": "newData.isBoolean() && (newData.val() === data.val() || root.child('boards/' + $code + '/meta/owner').val() === auth.uid)" },
             "$other": { ".validate": false }
           }
@@ -91,6 +96,49 @@
               ".write": "auth != null && auth.uid === $uid",
               ".validate": "newData.val() === true && root.child('boards/' + $code + '/posts/' + $postId).exists()"
             }
+          }
+        },
+        "joinCount": {
+          ".read": "auth != null",
+          ".write": "auth != null && (root.child('boards/' + $code + '/meta/groups').val() > 0 || root.child('boards/' + $code + '/meta/owner').val() === auth.uid)",
+          ".validate": "newData.isNumber() && ((!data.exists() && newData.val() === 1) || newData.val() === data.val() + 1)"
+        },
+        "members": {
+          ".write": "auth != null && root.child('boards/' + $code + '/meta/owner').val() === auth.uid",
+          "$uid": {
+            ".read": "auth != null && auth.uid === $uid",
+            ".write": "auth != null && auth.uid === $uid && !data.exists()",
+            ".validate": "newData.hasChildren(['group', 'slot', 'ts'])",
+            "group": { ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= root.child('boards/' + $code + '/meta/groups').val()" },
+            "slot": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() < root.child('boards/' + $code + '/joinCount').val()" },
+            "name": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 30" },
+            "ts": { ".validate": "newData.isNumber() && newData.val() === now" },
+            "$other": { ".validate": false }
+          }
+        },
+        "chat": {
+          ".read": "auth != null && root.child('boards/' + $code + '/members/' + auth.uid).exists() && query.orderByChild === 'group' && query.equalTo === root.child('boards/' + $code + '/members/' + auth.uid + '/group').val()",
+          ".write": "auth != null && root.child('boards/' + $code + '/meta/owner').val() === auth.uid",
+          ".indexOn": ["group"],
+          "$msgId": {
+            ".write": "auth != null && !data.exists() && root.child('boards/' + $code + '/meta/chat').val() === true && root.child('boards/' + $code + '/members/' + auth.uid).exists() && newData.child('group').val() === root.child('boards/' + $code + '/members/' + auth.uid + '/group').val()",
+            ".validate": "newData.hasChildren(['group', 'uid', 'slot', 'text', 'ts']) && (data.exists() || !newData.hasChild('likes'))",
+            "group": { ".validate": "newData.isNumber()" },
+            "uid": { ".validate": "newData.val() === auth.uid" },
+            "slot": { ".validate": "newData.isNumber() && newData.val() === root.child('boards/' + $code + '/members/' + auth.uid + '/slot').val()" },
+            "name": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 30" },
+            "text": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 300" },
+            "ts": { ".validate": "newData.isNumber() && newData.val() === now" },
+            "likes": {
+              "$uid": {
+                ".write": "auth != null && auth.uid === $uid && root.child('boards/' + $code + '/meta/chat').val() === true && root.child('boards/' + $code + '/members/' + auth.uid).exists() && root.child('boards/' + $code + '/chat/' + $msgId + '/group').val() === root.child('boards/' + $code + '/members/' + auth.uid + '/group').val() && root.child('boards/' + $code + '/chat/' + $msgId + '/uid').val() !== auth.uid",
+                ".validate": "newData.hasChild('slot')",
+                "slot": { ".validate": "newData.isNumber() && newData.val() === root.child('boards/' + $code + '/members/' + $uid + '/slot').val()" },
+                "name": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 30" },
+                "$other": { ".validate": false }
+              }
+            },
+            "$other": { ".validate": false }
           }
         },
         "$other": { ".validate": false }
